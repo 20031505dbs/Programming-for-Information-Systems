@@ -138,5 +138,94 @@ def get_products():
     
     return jsonify(product_list), 200
     
+
+@app.route('/api/cart', methods=['POST'])
+def add_to_cart():
+    data = request.get_json()
+
+    product_id = data['product_id']
+    quantity = data['quantity']
+    user_id = data['user_id']
+
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Failed to connect to the database'}), 500
+
+    cursor = connection.cursor()
+    
+    # Check current stock
+    cursor.execute('SELECT stock FROM products WHERE id = %s', (product_id,))
+    product = cursor.fetchone()
+    if product['stock'] < quantity:
+        cursor.close()
+        connection.close()
+        return jsonify({'error': 'Insufficient stock available'}), 400
+    
+    # Insert item into cart
+    cursor.execute('INSERT INTO cart_items (user_id, product_id, quantity) VALUES (%s, %s, %s)', (user_id, product_id, quantity))
+    
+    # Update stock
+    cursor.execute('UPDATE products SET stock = stock - %s WHERE id = %s', (quantity, product_id))
+    
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return jsonify({'message': 'Item added to cart!'}), 201
+
+# Get Cart Items
+@app.route('/api/cart', methods=['GET'])
+def get_cart():
+    user_id = request.args.get('user_id')
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Failed to connect to the database'}), 500
+
+    cursor = connection.cursor()
+    cursor.execute('SELECT * FROM cart_items WHERE user_id = %s', (user_id,))
+    user_cart_items = cursor.fetchall()
+    
+    cart_details = []
+    for item in user_cart_items:
+        cursor.execute('SELECT * FROM products WHERE id = %s', (item['product_id'],))
+        product = cursor.fetchone()
+        item['product'] = product
+        cart_details.append(item)
+
+    cursor.close()
+    connection.close()
+    return jsonify(cart_details), 200
+
+@app.route('/api/cart', methods=['DELETE'])
+def remove_from_cart():
+    data = request.get_json()
+
+    product_id = data['product_id']
+    user_id = data['user_id']
+
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Failed to connect to the database'}), 500
+
+    cursor = connection.cursor()
+    
+    # Find the item in the cart
+    cursor.execute('SELECT quantity FROM cart_items WHERE user_id = %s AND product_id = %s', (user_id, product_id))
+    cart_item = cursor.fetchone()
+    if not cart_item:
+        cursor.close()
+        connection.close()
+        return jsonify({'error': 'Item not found in cart'}), 404
+
+    # Remove item from cart
+    cursor.execute('DELETE FROM cart_items WHERE user_id = %s AND product_id = %s', (user_id, product_id))
+    
+    # Update stock
+    cursor.execute('UPDATE products SET stock = stock + %s WHERE id = %s', (cart_item['quantity'], product_id))
+    
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return jsonify({'message': 'Item removed from cart!'}), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
