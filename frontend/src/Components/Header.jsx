@@ -25,7 +25,7 @@ function Header() {
   };
 
   const menuItems = [
-    { text: "Home", href: "/dashboard" },
+    { text: "Home", href: "/" },
     { text: "Dupattas", href: "/categories/dupattas" },
     { text: "Dresses", href: "/categories/dresses" },
     { text: "Tops", href: "/categories/tops" },

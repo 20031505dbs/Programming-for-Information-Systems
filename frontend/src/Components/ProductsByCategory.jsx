@@ -11,23 +11,26 @@ import {
 } from "@mui/material";
 import axios from "axios";
 
-function FeaturedProducts() {
-  const [products, setProducts] = useState([]);
+import { useParams } from "react-router-dom";
+
+function ProductsByCategory() {
   const [quantity, setQuantity] = useState(1); // State for quantity
+  const [products, setProducts] = useState([]);
+  const { category } = useParams();
 
   useEffect(() => {
-    const getFeaturedProducts = async () => {
-      const data = await fetchFeaturedProducts();
+    const getProductsByCategory = async () => {
+      const data = await fetchProductsByCategory();
       setProducts(data);
     };
-    getFeaturedProducts();
+    getProductsByCategory();
   }, []);
 
-  const fetchFeaturedProducts = async () => {
+  const fetchProductsByCategory = async () => {
     try {
       const response = await axios.get("http://127.0.0.1:5000/api/products", {
         params: {
-          type: "featured",
+          category,
         },
       });
       return response.data;
@@ -47,7 +50,7 @@ function FeaturedProducts() {
       });
       if (response.status === 201) {
         alert("Item added to cart successfully!");
-        const data = await fetchFeaturedProducts();
+        const data = await fetchProductsByCategory();
         setProducts(data);
       } else {
         alert("Failed to add item to cart");
@@ -60,10 +63,13 @@ function FeaturedProducts() {
   return (
     <Box sx={{ my: 1 }}>
       <Typography variant="h4" gutterBottom>
-        Featured Products
+        {category.toUpperCase()}
       </Typography>
+      {products?.length === 0 && (
+        <p>{`No products found against ${category} category`}</p>
+      )}
       <Grid container spacing={4}>
-        {products.map((product) => (
+        {products?.map((product) => (
           <Grid item key={product.id} xs={12} sm={6} md={3}>
             <Card>
               <CardMedia
@@ -126,4 +132,4 @@ function FeaturedProducts() {
   );
 }
 
-export default FeaturedProducts;
+export default ProductsByCategory;

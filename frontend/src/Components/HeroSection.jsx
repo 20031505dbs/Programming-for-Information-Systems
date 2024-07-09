@@ -15,12 +15,7 @@ function HeroSection() {
           justifyContent: "center",
         }}
       >
-        <Button
-          variant="contained"
-          color="secondary"
-          size="large"
-          href="/product"
-        >
+        <Button variant="contained" color="secondary" size="large" href="/">
           Shop Now
         </Button>
       </Box>

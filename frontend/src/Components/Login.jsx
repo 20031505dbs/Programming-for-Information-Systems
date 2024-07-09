@@ -32,7 +32,7 @@ function Login() {
       if (response.status === 200) {
         alert("Login successful");
         login(response.data.user);
-        navigate("/dashboard");
+        navigate("/");
       } else {
         alert("Failed to login");
       }
